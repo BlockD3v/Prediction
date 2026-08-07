@@ -27,7 +27,7 @@ function HeaderMenuSkeleton() {
     <div className="flex items-center gap-2" aria-hidden="true" data-testid="header-menu-skeleton">
       <Skeleton className="hidden h-9 w-16 lg:block" />
       <Skeleton className="hidden h-9 w-16 lg:block" />
-      <Skeleton className="hidden h-9 w-16 lg:block" />
+      <Skeleton className="hidden h-9 w-20 lg:block" />
       <Skeleton className="size-9 rounded-md" />
       <div className="-ml-1 hidden h-5 w-px bg-border md:block" />
       <Skeleton className="h-9 w-20 rounded-md" />
