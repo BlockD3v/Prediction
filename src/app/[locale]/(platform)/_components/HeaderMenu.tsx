@@ -38,19 +38,20 @@ function HeaderMenuSkeleton() {
 export default function HeaderMenu() {
   const t = useExtracted()
   const { open: openAppKit } = useAppKit()
-  const { data: session } = useSession()
+  const { data: session, isPending } = useSession()
   const hasHydrated = useHasHydrated()
   const isMobile = useIsMobile()
   const tradingOnboarding = useOptionalTradingOnboarding()
   const user = useUser()
 
-  const isAuthenticated = hasHydrated && (Boolean(session?.user) || Boolean(user))
-  const shouldShowGuestActions = hasHydrated && !isAuthenticated
+  const shouldShowSkeleton = !hasHydrated || isPending
+  const isAuthenticated = !shouldShowSkeleton && (Boolean(session?.user) || Boolean(user))
+  const shouldShowGuestActions = !shouldShowSkeleton && !isAuthenticated
   const startDepositFlow = tradingOnboarding?.startDepositFlow
 
   return (
     <>
-      {!hasHydrated && <HeaderMenuSkeleton />}
+      {shouldShowSkeleton && <HeaderMenuSkeleton />}
 
       {isAuthenticated && (
         <>
