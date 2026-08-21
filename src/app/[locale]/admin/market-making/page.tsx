@@ -95,13 +95,8 @@ export default async function AdminMarketMakingPage() {
         verificationUnavailable: t('Verification is temporarily unavailable.'),
         saveChanges: t('Save changes'),
         marketMaking: t('Market Making'),
-        operatorEmailDescription: t(
-          'Link this wallet to your operator email to receive campaign updates. Your domain is validated from this site.',
-        ),
-        operatorEmailLinked: t('Operator notifications are linked to this site.'),
-        linkOperatorEmail: t('Link operator email'),
-        operatorVerificationPending: t('Check your inbox to verify the operator email, then return here.'),
-        verifyOperatorEmail: t('I verified the operator email'),
+        operatorVerificationPending: t('Check your inbox to verify the account email, then return here.'),
+        accountSettings: t('Profile Settings'),
       }}
       campaignsCopy={{
         search: t('Search markets or events'),
