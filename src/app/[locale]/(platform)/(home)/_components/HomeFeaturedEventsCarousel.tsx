@@ -1,12 +1,12 @@
 'use client'
 
-import type { CSSProperties } from 'react'
+import type { ComponentProps, CSSProperties } from 'react'
 
 import { ChevronLeftIcon, ChevronRightIcon, FlameIcon } from 'lucide-react'
 import { useExtracted, useLocale } from 'next-intl'
 import dynamic from 'next/dynamic'
 import Image from 'next/image'
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
+import { forwardRef, useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 
 import type {
   LinePickerMarketType,
@@ -544,11 +544,29 @@ function FeaturedHeaderActions({ event, className }: { event: HomeFeaturedEventC
   )
 }
 
+function resolveFeaturedDestinationHref(item: HomeFeaturedEventCard, locale: string) {
+  const seriesSlug =
+    item.targetType === 'series' && item.kind !== 'sports' ? item.resolvedSeriesSlug || item.event.series_slug : null
+  return seriesSlug
+    ? `/api/home-featured/live-link?seriesSlug=${encodeURIComponent(seriesSlug)}&locale=${encodeURIComponent(locale)}`
+    : resolveEventPagePath(item.event)
+}
+
+const FeaturedMarketLink = forwardRef<HTMLAnchorElement, ComponentProps<'a'> & { href: string }>(
+  function FeaturedMarketLink({ href, ...props }, ref) {
+    return href.startsWith('/api/home-featured/live-link?') ? (
+      <a {...props} href={href} ref={ref} />
+    ) : (
+      <Link {...props} href={href} ref={ref} />
+    )
+  },
+)
+
 function FeaturedHeader({ item, showActions = true }: { item: HomeFeaturedEventCard; showActions?: boolean }) {
   const t = useExtracted()
   const locale = useLocale()
   const event = item.event
-  const eventHref = resolveEventPagePath(event)
+  const eventHref = resolveFeaturedDestinationHref(item, locale)
   const cryptoCadencePresentation = resolveCryptoCadenceEventPresentation(event, locale)
   const breadcrumbItems = resolveFeaturedBreadcrumbItems(item).map((breadcrumbItem) => ({
     ...breadcrumbItem,
@@ -577,25 +595,28 @@ function FeaturedHeader({ item, showActions = true }: { item: HomeFeaturedEventC
     <div className="flex min-w-0 items-start justify-between gap-3">
       <div className="group/header flex min-w-0 flex-1 items-start gap-3">
         {item.kind !== 'sports' && (
-          <Link href={eventHref} className="size-11 shrink-0 overflow-hidden rounded-lg bg-muted md:size-12">
+          <FeaturedMarketLink
+            href={eventHref}
+            className="size-11 shrink-0 overflow-hidden rounded-lg bg-muted md:size-12"
+          >
             <EventIconImage
               src={event.icon_url || item.primaryMarkets[0]?.icon_url || '/images/pwa/default-icon-192.png'}
               alt={displayTitle}
               sizes="48px"
               containerClassName="size-full rounded-lg"
             />
-          </Link>
+          </FeaturedMarketLink>
         )}
         <div className="grid min-w-0 gap-1">
           {!cryptoCadencePresentation && <FeaturedBreadcrumb items={breadcrumbItems} />}
-          <Link
+          <FeaturedMarketLink
             href={eventHref}
             className={cn(
               `line-clamp-2 text-lg font-semibold tracking-tight underline-offset-4 group-hover/header:underline md:text-xl`,
             )}
           >
             {displayTitle}
-          </Link>
+          </FeaturedMarketLink>
           {cryptoCadencePresentation?.subtitle && (
             <span className="truncate text-xs text-muted-foreground md:text-sm">
               {cryptoCadencePresentation.subtitle}
@@ -614,6 +635,10 @@ function resolveFeaturedOutcomeHref(
   outcome: HomeFeaturedOutcomeSummary,
   fallbackHref: string,
 ) {
+  if (fallbackHref.startsWith('/api/home-featured/live-link?')) {
+    return `${fallbackHref}&outcomeIndex=${outcome.outcomeIndex}&marketSlug=${encodeURIComponent(outcome.marketSlug ?? '')}&conditionId=${encodeURIComponent(outcome.conditionId)}`
+  }
+
   return (
     resolveEventOutcomePath(event, {
       marketSlug: outcome.marketSlug,
@@ -638,7 +663,7 @@ function OutcomeRows({ item, linkedHref }: { item: HomeFeaturedEventCard; linked
         const label = normalizeOutcomeLabel(outcome.label)
 
         return (
-          <Link
+          <FeaturedMarketLink
             key={outcome.key}
             href={resolveFeaturedOutcomeHref(item.event, outcome, linkedHref)}
             className={cn(
@@ -661,7 +686,7 @@ function OutcomeRows({ item, linkedHref }: { item: HomeFeaturedEventCard; linked
               </span>
             </span>
             <span className="text-xl font-semibold tabular-nums">{formatChancePercent(outcome.chance)}</span>
-          </Link>
+          </FeaturedMarketLink>
         )
       })}
     </div>
@@ -706,7 +731,7 @@ function StandardActions({
             style={liveOutcomeAppearance?.style}
             nativeButton={false}
             render={
-              <Link
+              <FeaturedMarketLink
                 href={resolveFeaturedOutcomeHref(item.event, outcome, linkedHref)}
                 className="relative inline-flex size-full items-center justify-center"
               >
@@ -720,7 +745,7 @@ function StandardActions({
                   />
                 ) : null}
                 <span className="relative z-1 truncate">{normalizeOutcomeLabel(outcome.label)}</span>
-              </Link>
+              </FeaturedMarketLink>
             }
           />
         )
@@ -1294,7 +1319,11 @@ function ContextTickerItem({
       : formatContextRelativeTime(contextItem.publishedAt ?? contextItem.selectedAt, currentTimestamp, locale)
 
   return (
-    <Link key={`${contextItem.id}:${index}`} href={linkedHref} className="flex h-14 min-w-0 items-center gap-2">
+    <FeaturedMarketLink
+      key={`${contextItem.id}:${index}`}
+      href={linkedHref}
+      className="flex h-14 min-w-0 items-center gap-2"
+    >
       {(!isNews || !contextItem.faviconUrl) && <ContextAvatar contextItem={contextItem} />}
       <span className="grid min-w-0 gap-0.5">
         <span className="flex min-w-0 items-center gap-1.5 text-xs font-medium text-muted-foreground/60">
@@ -1317,7 +1346,7 @@ function ContextTickerItem({
         </span>
         <span className="line-clamp-2 text-xs/snug text-muted-foreground/75">{contextItem.title}</span>
       </span>
-    </Link>
+    </FeaturedMarketLink>
   )
 }
 
@@ -2130,7 +2159,7 @@ function FeaturedSlide({
   const locale = useLocale()
   const item = useMemo(() => localizeHomeFeaturedMarketDates(rolloverItem, locale), [locale, rolloverItem])
   const isMobile = useIsMobile()
-  const linkedHref = resolveEventPagePath(item.event)
+  const linkedHref = resolveFeaturedDestinationHref(item, locale)
   const shouldRenderChart = isChartEnabled && (isPrevious || isActive || isNext)
   const [chartContainerRef, chartContainerWidth] = useElementWidth<HTMLDivElement>(shouldRenderChart)
   const isSingleMarket = item.event.total_markets_count === 1 || item.event.markets.length === 1
